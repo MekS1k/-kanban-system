@@ -25,11 +25,11 @@ export default {
   margin: 0.5rem;
   text-align: left;
   background-color: #f9f9f9;
-  max-width: 300px; /* Установите максимальную ширину карточки */
+  max-width: 290px;
 }
 
 .product-image {
-  max-width: 10%; /* Установите максимальную ширину изображения */
   height: auto;
+  max-width: 12%;
 }
 </style>
