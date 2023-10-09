@@ -1,26 +1,31 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js App" />
+    <header></header>
+    <main>
+      <KanbanBoard />
+    </main>
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld.vue";
+import KanbanBoard from "./components/KanbanBoard.vue";
 
 export default {
-  name: "App",
   components: {
-    HelloWorld,
+    KanbanBoard,
   },
 };
 </script>
 
-<style lang="scss">
+<style>
+/* Add your global styles here */
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
