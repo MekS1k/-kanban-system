@@ -1,6 +1,6 @@
-# kanban
 
-# project link -  kanban-system.vercel.app
+
+## How this web application look like -  kanban-system.vercel.app
 
 ## Project setup
 
@@ -28,4 +28,3 @@ npm run lint
 
 ### Customize configuration
 
-See [Configuration Reference](https://cli.vuejs.org/config/).
