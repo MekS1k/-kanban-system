@@ -1,7 +1,7 @@
 <template>
   <div class="kanban-board">
     <div class="column">
-      <h2>Todo</h2>
+      <h2>Необработанные - {{ todoProducts.length }}</h2>
       <div v-for="product in todoProducts" :key="product.id">
         <div
           class="card todo-bg"
@@ -15,7 +15,7 @@
       </div>
     </div>
     <div class="column">
-      <h2>In Progress</h2>
+      <h2>В работе - {{ inProgressProducts.length }}</h2>
       <div v-for="product in inProgressProducts" :key="product.id">
         <div
           class="card inprogress-bg"
@@ -29,7 +29,7 @@
       </div>
     </div>
     <div class="column">
-      <h2>Done</h2>
+      <h2>Завершенные - {{ doneProducts.length }}</h2>
       <div v-for="product in doneProducts" :key="product.id">
         <div
           class="card done-bg"
