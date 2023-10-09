@@ -1,9 +1,9 @@
 
-
-## How this web application look like -  kanban-system.vercel.app
+# Link to my app:
+# kanban-system.vercel.app
 
 ## Project setup
-
+ 
 ```
 npm install
 ```
