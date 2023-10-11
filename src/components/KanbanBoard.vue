@@ -2,71 +2,204 @@
   <div class="kanban-board">
     <div class="column">
       <h2>Необработанные - {{ todoProducts.length }}</h2>
-      <div v-for="product in todoProducts" :key="product.id">
+      <draggable
+        class="column-content"
+        :list="todoProducts"
+        group="kanban"
+        @change="onDragEnd('todo')"
+      >
         <div
           class="card todo-bg"
-          :class="{
-            'inprogress-bg': product.status === 'inprogress',
-            'done-bg': product.status === 'done',
-          }"
+          :class="getCardClass('todo')"
+          v-for="product in todoProducts"
+          :key="product.id"
         >
-          <ProductCard :product="product" status="todo" />
+          <div>
+            <ProductCard
+              :product="product"
+              status="todo"
+              @edit="editProduct(product)"
+            />
+            <button class="button-delete" @click="deleteProduct(product)">
+              Удалить
+            </button>
+            <button class="button-edit" @click="editProduct(product)">
+              Редактировать
+            </button>
+          </div>
         </div>
-      </div>
+      </draggable>
     </div>
+
     <div class="column">
       <h2>В работе - {{ inProgressProducts.length }}</h2>
-      <div v-for="product in inProgressProducts" :key="product.id">
+      <draggable
+        class="column-content"
+        :list="inProgressProducts"
+        group="kanban"
+        @change="onDragEnd('inprogress')"
+      >
         <div
           class="card inprogress-bg"
-          :class="{
-            'todo-bg': product.status === 'todo',
-            'done-bg': product.status === 'done',
-          }"
+          :class="getCardClass('inprogress')"
+          v-for="product in inProgressProducts"
+          :key="product.id"
         >
-          <ProductCard :product="product" status="inprogress" />
+          <div>
+            <ProductCard
+              :product="product"
+              status="inprogress"
+              @edit="editProduct(product)"
+            />
+            <button class="button-delete" @click="deleteProduct(product)">
+              Удалить
+            </button>
+            <button class="button-edit" @click="editProduct(product)">
+              Редактировать
+            </button>
+          </div>
         </div>
-      </div>
+      </draggable>
     </div>
+
     <div class="column">
       <h2>Завершенные - {{ doneProducts.length }}</h2>
-      <div v-for="product in doneProducts" :key="product.id">
+      <draggable
+        class="column-content"
+        :list="doneProducts"
+        group="kanban"
+        @change="onDragEnd('done')"
+      >
         <div
           class="card done-bg"
-          :class="{
-            'todo-bg': product.status === 'todo',
-            'inprogress-bg': product.status === 'inprogress',
-          }"
+          :class="getCardClass('done')"
+          v-for="product in doneProducts"
+          :key="product.id"
         >
-          <ProductCard :product="product" status="done" />
+          <div>
+            <ProductCard
+              :product="product"
+              status="done"
+              @edit="editProduct(product)"
+            />
+            <button class="button-delete" @click="deleteProduct(product)">
+              Удалить
+            </button>
+            <button class="button-edit" @click="editProduct(product)">
+              Редактировать
+            </button>
+          </div>
         </div>
+      </draggable>
+    </div>
+
+    <div class="window">
+      <div class="addProduct">
+        <h2>Добавление продукта</h2>
+        <input placeholder="Заголовок нового продукта" />
+        <input v-model="newProductPrice" placeholder="Цена нового продукта" />
+        <input
+          v-model="newProductcategory"
+          placeholder="Категория нового продукта"
+        />
+        <button @click="addProduct">Добавить новый продукт</button>
+      </div>
+
+      <div v-if="editingProduct" class="editProduct">
+        <h2>Редактирование продукта</h2>
+        <input v-model="editedProduct.title" placeholder="Название продукта" />
+        <input v-model="editedProduct.price" placeholder="Цена продукта" />
+        <input
+          v-model="editedProduct.category"
+          placeholder="Категория продукта"
+        />
+        <button @click="saveEditedProduct">Сохранить</button>
+        <button @click="cancelEdit">Отмена</button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import ProductCard from "./ProductCard";
+import draggable from "vuedraggable";
+
 export default {
+  components: {
+    ProductCard,
+    draggable,
+  },
   data() {
     return {
       todoProducts: [],
       inProgressProducts: [],
       doneProducts: [],
       statuses: ["todo", "inprogress", "done"],
+      newProductTitle: "",
+      newProductPrice: "",
+      newProductcategory: "",
+      editingProduct: null,
+      editedProduct: {
+        title: "",
+        price: 0,
+        category: "",
+      },
     };
   },
-  async created() {
-    try {
-      const response = await fetch("https://fakestoreapi.com/products");
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const products = await response.json();
+  created() {
+    this.loadProductsFromAPI();
+  },
+  methods: {
+    getCardClass(status) {
+      return {
+        todo: status === "todo",
+        inprogress: status === "inprogress",
+        done: status === "done",
+      };
+    },
+    onDragEnd(column) {
+      const columnMappings = {
+        todo: "Необработанные",
+        inprogress: "В работе",
+        done: "Завершенные",
+      };
 
-      // Распределение продуктов по статусам случайным образом
+      const cardStatus = columnMappings[column];
+
+      this.todoProducts.forEach((product) => {
+        if (product.status === cardStatus) {
+          product.status = "todo";
+        }
+      });
+
+      this.inProgressProducts.forEach((product) => {
+        if (product.status === cardStatus) {
+          product.status = "inprogress";
+        }
+      });
+
+      this.doneProducts.forEach((product) => {
+        if (product.status === cardStatus) {
+          product.status = "done";
+        }
+      });
+    },
+    async loadProductsFromAPI() {
+      try {
+        const response = await fetch("https://fakestoreapi.com/products");
+        if (!response.ok) {
+          throw new Error("Ошибка при загрузке продуктов");
+        }
+        const products = await response.json();
+        this.loadProducts(products);
+      } catch (error) {
+        console.error("Ошибка при загрузке продуктов:", error);
+      }
+    },
+    loadProducts(products) {
       products.forEach((product) => {
         const status = this.getRandomStatus();
-        product.status = status; // Добавляем статус к каждому продукту
+        product.status = status;
         if (status === "todo") {
           this.todoProducts.push(product);
         } else if (status === "inprogress") {
@@ -75,26 +208,140 @@ export default {
           this.doneProducts.push(product);
         }
       });
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  },
-  methods: {
+    },
     getRandomStatus() {
       const randomIndex = Math.floor(Math.random() * this.statuses.length);
       return this.statuses[randomIndex];
     },
+    async addProduct() {
+      try {
+        const newProduct = {
+          title: this.newProductTitle,
+          price: parseFloat(this.newProductPrice),
+          description: "",
+          image: "https://example.com/image.jpg",
+          category: this.newProductcategory,
+          status: this.getRandomStatus(),
+        };
+
+        const response = await fetch("https://fakestoreapi.com/products", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newProduct),
+        });
+
+        if (!response.ok) {
+          throw new Error("Ошибка при добавлении продукта");
+        }
+
+        const productData = await response.json();
+
+        if (newProduct.status === "todo") {
+          this.todoProducts.push(productData);
+        } else if (newProduct.status === "inprogress") {
+          this.inProgressProducts.push(productData);
+        } else if (newProduct.status === "done") {
+          this.doneProducts.push(productData);
+        }
+
+        this.newProductTitle = "";
+        this.newProductPrice = "";
+        this.newProductcategory = "";
+
+        console.log("Новый продукт успешно добавлен:", productData);
+      } catch (error) {
+        console.error("Ошибка при добавлении продукта:", error);
+      }
+    },
+    editProduct(product) {
+      this.editingProduct = product;
+      this.editedProduct = {
+        title: product.title,
+        price: product.price,
+        category: product.category,
+      };
+    },
+    async saveEditedProduct() {
+      if (this.editingProduct) {
+        const updatedProduct = {
+          title: this.editedProduct.title,
+          price: this.editedProduct.price,
+          category: this.editedProduct.category,
+        };
+
+        try {
+          const response = await fetch(
+            `https://fakestoreapi.com/products/${this.editingProduct.id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(updatedProduct),
+            }
+          );
+
+          if (response.ok) {
+            this.editingProduct.title = this.editedProduct.title;
+            this.editingProduct.price = this.editedProduct.price;
+            this.editingProduct.category = this.editedProduct.category;
+            this.editingProduct = null;
+          } else {
+            console.error("Ошибка при обновлении продукта");
+          }
+        } catch (error) {
+          console.error("Ошибка при обновлении продукта:", error);
+        }
+      }
+    },
+    cancelEdit() {
+      this.editingProduct = null;
+      this.editedProduct = {
+        title: "",
+        price: 0,
+        category: "",
+      };
+    },
+    async deleteProduct(product) {
+      try {
+        const response = await fetch(
+          `https://fakestoreapi.com/products/${product.id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (response.ok) {
+          this.todoProducts = this.todoProducts.filter(
+            (p) => p.id !== product.id
+          );
+          this.inProgressProducts = this.inProgressProducts.filter(
+            (p) => p.id !== product.id
+          );
+          this.doneProducts = this.doneProducts.filter(
+            (p) => p.id !== product.id
+          );
+        } else {
+          console.error("Ошибка при удалении продукта");
+        }
+      } catch (error) {
+        console.error("Ошибка при удалении продукта:", error);
+      }
+    },
   },
 };
 </script>
-
 <style scoped>
+input {
+  min-width: 200px;
+  min-height: 20px;
+}
+
 .kanban-board {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(280px, 1fr)
-  ); /* Адаптивные столбцы */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
 }
 
@@ -102,7 +349,6 @@ export default {
   border: 1px solid #ccc;
   padding: 1rem;
   text-align: center;
-  /* Ширина столбцов регулируется с помощью minmax */
   width: minmax(280px, 1fr);
 }
 
@@ -112,8 +358,7 @@ export default {
   border: 1px solid #ddd;
   display: flex;
   justify-content: center;
-  border-radius: 10px; /* Увеличил радиус скругления */
-  /* Ширина карточек также регулируется с помощью minmax */
+  border-radius: 10px;
   width: minmax(280px, 1fr);
 }
 
@@ -139,5 +384,16 @@ export default {
 
 h2 {
   margin: 0;
+}
+.addProduct {
+  max-width: 250px;
+}
+.window {
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
+.editProduct {
+  max-width: 250px;
 }
 </style>
