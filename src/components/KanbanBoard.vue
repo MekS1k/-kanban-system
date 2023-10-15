@@ -1,6 +1,17 @@
 <template>
   <div class="kanban-board">
     <div class="column">
+      <div class="sort-select">
+        <label for="todoSortDirection">Необработанные: </label>
+        <select
+          v-model="todoSortDirection"
+          id="todoSortDirection"
+          @change="sortProductsByRating('todo')"
+        >
+          <option value="asc">По возрастанию</option>
+          <option value="desc">По убыванию</option>
+        </select>
+      </div>
       <h2>Необработанные - {{ todoProducts.length }}</h2>
       <draggable
         class="column-content"
@@ -32,6 +43,17 @@
     </div>
 
     <div class="column">
+      <div class="sort-select">
+        <label for="inProgressSortDirection">В работе: </label>
+        <select
+          v-model="inProgressSortDirection"
+          id="inProgressSortDirection"
+          @change="sortProductsByRating('inProgress')"
+        >
+          <option value="asc">По возрастанию</option>
+          <option value="desc">По убыванию</option>
+        </select>
+      </div>
       <h2>В работе - {{ inProgressProducts.length }}</h2>
       <draggable
         class="column-content"
@@ -63,6 +85,17 @@
     </div>
 
     <div class="column">
+      <div class="sort-select">
+        <label for="doneSortDirection">Завершенные: </label>
+        <select
+          v-model="doneSortDirection"
+          id="doneSortDirection"
+          @change="sortProductsByRating('done')"
+        >
+          <option value="asc">По возрастанию</option>
+          <option value="desc">По убыванию</option>
+        </select>
+      </div>
       <h2>Завершенные - {{ doneProducts.length }}</h2>
       <draggable
         class="column-content"
@@ -134,6 +167,9 @@ export default {
       todoProducts: [],
       inProgressProducts: [],
       doneProducts: [],
+      todoSortDirection: "asc",
+      inProgressSortDirection: "asc",
+      doneSortDirection: "asc",
       statuses: ["todo", "inprogress", "done"],
       newProductTitle: "",
       newProductPrice: "",
@@ -149,7 +185,35 @@ export default {
   created() {
     this.loadProductsFromAPI();
   },
+  mounted() {
+    this.sortProductsByRating("todo");
+    this.sortProductsByRating("inprogress");
+    this.sortProductsByRating("done");
+  },
   methods: {
+    sortProductsByRating(column) {
+      if (
+        this[`${column}Products`] &&
+        Array.isArray(this[`${column}Products`])
+      ) {
+        const tempProducts = [...this[`${column}Products`]];
+        const compareFunction = (a, b) => {
+          const direction = this[`${column}SortDirection`];
+
+          if (direction === "asc") {
+            return a.rating.rate - b.rating.rate;
+          } else {
+            return b.rating.rate - a.rating.rate;
+          }
+        };
+
+        tempProducts.sort(compareFunction);
+
+        // Обновляем данные в текущем столбце
+        this[`${column}Products`] = tempProducts;
+      }
+    },
+
     getCardClass(status) {
       return {
         todo: status === "todo",
@@ -395,5 +459,12 @@ h2 {
 }
 .editProduct {
   max-width: 250px;
+}
+select {
+  min-width: 200px;
+  min-height: 20px;
+}
+.sort-select {
+  margin-bottom: 15px;
 }
 </style>
